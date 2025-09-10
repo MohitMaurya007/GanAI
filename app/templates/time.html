@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Time · Productivity{% endblock %}
+{% block content %}
+<h2>Time Entries</h2>
+
+<form method="post" action="{{ url_for('main.add_time_entry') }}">
+	<div class="grid">
+		<select name="employee_id" required>
+			{% for emp in employees %}
+			<option value="{{ emp.id }}">{{ emp.name }}</option>
+			{% endfor %}
+		</select>
+		<select name="task_id">
+			<option value="">No task</option>
+			{% for t in tasks %}
+			<option value="{{ t.id }}">{{ t.title }}</option>
+			{% endfor %}
+		</select>
+		<input type="number" name="hours" step="0.25" min="0" placeholder="Hours" required />
+	</div>
+	<input type="text" name="description" placeholder="Description (optional)" />
+	<button type="submit">Log Time</button>
+	</form>
+
+<table>
+	<thead>
+		<tr>
+			<th>When</th>
+			<th>Employee</th>
+			<th>Task</th>
+			<th>Hours</th>
+			<th>Description</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for e in entries %}
+		<tr>
+			<td>{{ e.started_at.strftime('%Y-%m-%d %H:%M') }}</td>
+			<td>{{ e.employee.name }}</td>
+			<td>{{ e.task.title if e.task else '-' }}</td>
+			<td>{{ '%.2f' % (e.hours or 0) }}</td>
+			<td>{{ e.description or '' }}</td>
+		</tr>
+		{% else %}
+		<tr><td colspan="5">No entries yet.</td></tr>
+		{% endfor %}
+	</tbody>
+</table>
+{% endblock %}
+

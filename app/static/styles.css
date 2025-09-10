@@ -1,0 +1,4 @@
+.flash { margin: 0.5rem 0; }
+.flash.success { color: #0a7d2a; }
+.flash.error { color: #b00020; }
+.flash.info { color: #004ecb; }

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Employees · Productivity{% endblock %}
+{% block content %}
+<h2>Employees</h2>
+
+<form method="post" action="{{ url_for('main.add_employee') }}" class="grid">
+	<input type="text" name="name" placeholder="Full name" required />
+	<input type="text" name="role" placeholder="Role (optional)" />
+	<button type="submit">Add</button>
+</form>
+
+<table>
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Role</th>
+			<th>Status</th>
+			<th>Created</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for emp in employees %}
+		<tr>
+			<td>{{ emp.name }}</td>
+			<td>{{ emp.role or '-' }}</td>
+			<td>{{ 'Active' if emp.active else 'Inactive' }}</td>
+			<td>{{ emp.created_at.strftime('%Y-%m-%d') }}</td>
+		</tr>
+		{% else %}
+		<tr><td colspan="4">No employees yet.</td></tr>
+		{% endfor %}
+	</tbody>
+</table>
+{% endblock %}
+

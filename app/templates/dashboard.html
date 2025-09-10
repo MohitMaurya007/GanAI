@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard · Productivity{% endblock %}
+{% block content %}
+<h2>Dashboard</h2>
+<div class="grid">
+	<article>
+		<header>Total Employees</header>
+		<h3>{{ employee_count }}</h3>
+	</article>
+	<article>
+		<header>Open Tasks</header>
+		<h3>{{ open_tasks }}</h3>
+	</article>
+	<article>
+		<header>Completed Tasks</header>
+		<h3>{{ completed_tasks }}</h3>
+	</article>
+</div>
+
+<h3>Recent Time Entries</h3>
+<table>
+	<thead>
+		<tr>
+			<th>When</th>
+			<th>Employee</th>
+			<th>Task</th>
+			<th>Hours</th>
+			<th>Description</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for e in recent_entries %}
+		<tr>
+			<td>{{ e.started_at.strftime('%Y-%m-%d %H:%M') }}</td>
+			<td>{{ e.employee.name }}</td>
+			<td>{{ e.task.title if e.task else '-' }}</td>
+			<td>{{ '%.2f' % (e.hours or 0) }}</td>
+			<td>{{ e.description or '' }}</td>
+		</tr>
+		{% else %}
+		<tr><td colspan="5">No time entries yet.</td></tr>
+		{% endfor %}
+	</tbody>
+</table>
+{% endblock %}
+

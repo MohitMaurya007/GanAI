@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>{% block title %}Productivity{% endblock %}</title>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+	<nav class="container-fluid">
+		<ul>
+			<li><strong>Employee Productivity</strong></li>
+		</ul>
+		<ul>
+			<li><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+			<li><a href="{{ url_for('main.employees') }}">Employees</a></li>
+			<li><a href="{{ url_for('main.tasks') }}">Tasks</a></li>
+			<li><a href="{{ url_for('main.time_entries') }}">Time</a></li>
+		</ul>
+	</nav>
+	<main class="container">
+		{% with messages = get_flashed_messages(with_categories=true) %}
+			{% if messages %}
+				<div>
+					{% for category, message in messages %}
+						<p class="flash {{ category }}">{{ message }}</p>
+					{% endfor %}
+				</div>
+			{% endif %}
+		{% endwith %}
+		{% block content %}{% endblock %}
+	</main>
+</body>
+</html>
+

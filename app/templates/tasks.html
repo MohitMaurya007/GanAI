@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Tasks · Productivity{% endblock %}
+{% block content %}
+<h2>Tasks</h2>
+
+<form method="post" action="{{ url_for('main.add_task') }}">
+	<div class="grid">
+		<input type="text" name="title" placeholder="Task title" required />
+		<select name="employee_id">
+			<option value="">Unassigned</option>
+			{% for emp in employees %}
+			<option value="{{ emp.id }}">{{ emp.name }}</option>
+			{% endfor %}
+		</select>
+	</div>
+	<textarea name="description" placeholder="Description (optional)"></textarea>
+	<button type="submit">Create</button>
+	</form>
+
+<table>
+	<thead>
+		<tr>
+			<th>Title</th>
+			<th>Assignee</th>
+			<th>Status</th>
+			<th>Created</th>
+			<th>Actions</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for t in tasks %}
+		<tr>
+			<td>{{ t.title }}</td>
+			<td>{{ t.employee.name if t.employee else '-' }}</td>
+			<td>{{ t.status }}</td>
+			<td>{{ t.created_at.strftime('%Y-%m-%d') }}</td>
+			<td>
+				<form method="post" action="{{ url_for('main.update_task_status', task_id=t.id) }}">
+					<select name="status">
+						<option value="todo" {{ 'selected' if t.status=='todo' else '' }}>To Do</option>
+						<option value="doing" {{ 'selected' if t.status=='doing' else '' }}>Doing</option>
+						<option value="done" {{ 'selected' if t.status=='done' else '' }}>Done</option>
+					</select>
+					<button type="submit">Update</button>
+				</form>
+			</td>
+		</tr>
+		{% else %}
+		<tr><td colspan="5">No tasks yet.</td></tr>
+		{% endfor %}
+	</tbody>
+</table>
+{% endblock %}
+
