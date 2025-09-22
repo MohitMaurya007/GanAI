@@ -1,0 +1,276 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  STANDARD_USER
+  REVIEWER
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+}
+
+enum DuplicateStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  AUTO_PROCESSED
+}
+
+enum ProcessingStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id                String              @id @default(uuid())
+  email             String              @unique
+  username          String              @unique
+  password          String
+  role              UserRole            @default(STANDARD_USER)
+  firstName         String?
+  lastName          String?
+  avatar            String?
+  isActive          Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  lastLoginAt       DateTime?
+  
+  // Relationships
+  mediaFiles        MediaFile[]
+  duplicateReviews  DuplicateReview[]
+  userSettings      UserSettings?
+  
+  @@map("users")
+}
+
+model UserSettings {
+  id                        String  @id @default(uuid())
+  userId                    String  @unique
+  user                      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Duplicate detection thresholds
+  faceThreshold             Float   @default(0.8)
+  objectThreshold           Float   @default(0.7)
+  sceneThreshold            Float   @default(0.75)
+  audioThreshold            Float   @default(0.8)
+  
+  // Processing preferences
+  autoProcessDuplicates     Boolean @default(false)
+  enableFaceDetection       Boolean @default(true)
+  enableObjectDetection     Boolean @default(true)
+  enableSceneAnalysis       Boolean @default(true)
+  enableAudioFingerprinting Boolean @default(true)
+  
+  // Notification preferences
+  emailNotifications        Boolean @default(true)
+  pushNotifications         Boolean @default(true)
+  
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+  
+  @@map("user_settings")
+}
+
+model MediaFile {
+  id                String           @id @default(uuid())
+  userId            String
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // File information
+  filename          String
+  originalName      String
+  mimeType          String
+  fileSize          Int
+  mediaType         MediaType
+  filePath          String
+  thumbnailPath     String?
+  
+  // File hashes
+  md5Hash           String
+  sha256Hash        String
+  perceptualHash    String?
+  
+  // Metadata
+  width             Int?
+  height            Int?
+  duration          Float?           // For video/audio in seconds
+  bitrate           Int?
+  framerate         Float?
+  
+  // Processing status
+  processingStatus  ProcessingStatus @default(PENDING)
+  processingError   String?
+  
+  // AI/ML extracted features
+  features          MediaFeatures?
+  
+  // Timestamps
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  // Relationships
+  duplicatesFound   DuplicateMatch[] @relation("OriginalFile")
+  duplicatesOf      DuplicateMatch[] @relation("DuplicateFile")
+  
+  @@unique([userId, md5Hash])
+  @@index([mediaType])
+  @@index([md5Hash])
+  @@index([perceptualHash])
+  @@map("media_files")
+}
+
+model MediaFeatures {
+  id              String    @id @default(uuid())
+  mediaFileId     String    @unique
+  mediaFile       MediaFile @relation(fields: [mediaFileId], references: [id], onDelete: Cascade)
+  
+  // Face detection features
+  faces           Json?     // Array of face embeddings and bounding boxes
+  faceCount       Int       @default(0)
+  
+  // Object detection features
+  objects         Json?     // Array of detected objects with confidence scores
+  objectCount     Int       @default(0)
+  
+  // Scene analysis features
+  sceneEmbedding  Json?     // Deep learning scene embedding vector
+  dominantColors  Json?     // Array of dominant colors
+  
+  // Audio features (for audio/video files)
+  audioFingerprint String?
+  speechText      String?   // Transcribed speech
+  audioEmbedding  Json?     // Audio similarity embedding
+  
+  // Video-specific features
+  keyframes       Json?     // Key frame embeddings
+  motionVectors   Json?     // Motion analysis data
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("media_features")
+}
+
+model DuplicateMatch {
+  id                String            @id @default(uuid())
+  originalFileId    String
+  duplicateFileId   String
+  originalFile      MediaFile         @relation("OriginalFile", fields: [originalFileId], references: [id], onDelete: Cascade)
+  duplicateFile     MediaFile         @relation("DuplicateFile", fields: [duplicateFileId], references: [id], onDelete: Cascade)
+  
+  // Similarity scores
+  overallSimilarity Float
+  faceSimilarity    Float?
+  objectSimilarity  Float?
+  sceneSimilarity   Float?
+  audioSimilarity   Float?
+  
+  // Match metadata
+  matchType         String            // "exact", "perceptual", "face", "object", "scene", "audio"
+  confidence        Float
+  
+  // Status and review
+  status            DuplicateStatus   @default(PENDING)
+  reviewedAt        DateTime?
+  
+  // Relationships
+  reviews           DuplicateReview[]
+  
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@unique([originalFileId, duplicateFileId])
+  @@index([status])
+  @@index([overallSimilarity])
+  @@map("duplicate_matches")
+}
+
+model DuplicateReview {
+  id              String          @id @default(uuid())
+  duplicateMatchId String
+  duplicateMatch  DuplicateMatch  @relation(fields: [duplicateMatchId], references: [id], onDelete: Cascade)
+  
+  reviewerId      String
+  reviewer        User            @relation(fields: [reviewerId], references: [id])
+  
+  decision        DuplicateStatus // CONFIRMED or REJECTED
+  notes           String?
+  confidence      Float?          // Reviewer's confidence in their decision
+  
+  createdAt       DateTime        @default(now())
+  
+  @@map("duplicate_reviews")
+}
+
+model ProcessingJob {
+  id            String           @id @default(uuid())
+  mediaFileId   String?
+  jobType       String           // "feature_extraction", "duplicate_detection", etc.
+  status        ProcessingStatus @default(PENDING)
+  progress      Float            @default(0)
+  
+  // Job data
+  inputData     Json?
+  outputData    Json?
+  errorMessage  String?
+  
+  // Queue information
+  queueName     String?
+  jobId         String?          // Bull queue job ID
+  
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  startedAt     DateTime?
+  completedAt   DateTime?
+  
+  @@index([status])
+  @@index([jobType])
+  @@map("processing_jobs")
+}
+
+model SystemSettings {
+  id                      String   @id @default(uuid())
+  key                     String   @unique
+  value                   String
+  description             String?
+  category                String   @default("general")
+  isPublic                Boolean  @default(false) // Whether setting is visible to non-admin users
+  
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  
+  @@map("system_settings")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  action      String
+  resource    String
+  resourceId  String?
+  details     Json?
+  ipAddress   String?
+  userAgent   String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
