@@ -31,11 +31,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null
         }
 
-        // For demo purposes, we'll create a simple password check
-        // In production, you'd want proper password hashing
+        // Verify password against stored hash
+        if (!user.password) {
+          return null // User doesn't have a password set (OAuth user)
+        }
+
         const isPasswordValid = await bcrypt.compare(
           credentials.password as string,
-          user.name || "" // Using name field temporarily for password storage
+          user.password
         )
 
         if (!isPasswordValid) {
@@ -97,7 +100,8 @@ export async function createUser(email: string, password: string, name?: string,
   return await db.user.create({
     data: {
       email,
-      name: hashedPassword, // Temporarily storing password in name field
+      name,
+      password: hashedPassword,
       role,
     }
   })

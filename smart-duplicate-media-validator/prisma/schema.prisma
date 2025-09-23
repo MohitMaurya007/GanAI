@@ -41,6 +41,7 @@ model User {
   id            String    @id @default(cuid())
   email         String    @unique
   name          String?
+  password      String?   // For credentials-based authentication
   role          UserRole  @default(STANDARD_USER)
   image         String?
   emailVerified DateTime?

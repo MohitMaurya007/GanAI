@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createUser } from "@/lib/auth"
+import { db } from "@/lib/db"
 import { UserRole } from "@prisma/client"
 import { z } from "zod"
 
@@ -14,6 +15,18 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { email, password, name, role } = registerSchema.parse(body)
+
+    // Check if user already exists
+    const existingUser = await db.user.findUnique({
+      where: { email }
+    })
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "User with this email already exists" },
+        { status: 409 }
+      )
+    }
 
     const user = await createUser(email, password, name, role)
 
@@ -34,6 +47,15 @@ export async function POST(request: NextRequest) {
     }
 
     console.error("Registration error:", error)
+    
+    // Handle Prisma unique constraint errors
+    if ((error as any)?.code === 'P2002') {
+      return NextResponse.json(
+        { error: "User with this email already exists" },
+        { status: 409 }
+      )
+    }
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -41,6 +41,12 @@ export default function SignUpPage() {
     }
 
     try {
+      console.log("Attempting to register user:", {
+        email: formData.email,
+        name: formData.name,
+        role: formData.role
+      })
+
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
@@ -55,14 +61,16 @@ export default function SignUpPage() {
       })
 
       const data = await response.json()
+      console.log("Registration response:", { status: response.status, data })
 
       if (response.ok) {
         router.push("/auth/signin?message=Account created successfully")
       } else {
-        setError(data.error || "An error occurred")
+        setError(data.error || `Registration failed (${response.status})`)
       }
     } catch (error) {
-      setError("An error occurred. Please try again.")
+      console.error("Registration error:", error)
+      setError("Network error. Please check your connection and try again.")
     } finally {
       setIsLoading(false)
     }
