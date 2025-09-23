@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getAuthSession } from "@/lib/auth-wrapper"
 import { db } from "@/lib/db"
 import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
@@ -15,7 +15,7 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR || "./uploads"
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth()
+    const session = await getAuthSession()
     
     if (!session) {
       return NextResponse.json(

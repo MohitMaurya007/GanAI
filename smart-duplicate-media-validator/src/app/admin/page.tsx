@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation"
-import { auth } from "@/lib/auth"
+import { getAuthSession } from "@/lib/auth-wrapper"
 import { DuplicateDetectionService } from "@/lib/duplicate-detection"
 import { db } from "@/lib/db"
 import { Navbar } from "@/components/layout/navbar"
 import { AdminDashboard } from "@/components/admin/admin-dashboard"
 
 export default async function AdminPage() {
-  const session = await auth()
+  const session = await getAuthSession()
 
   if (!session || session.user.role !== "ADMIN") {
     redirect("/auth/signin")

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getAuthSession } from "@/lib/auth-wrapper"
 import { DuplicateDetectionService } from "@/lib/duplicate-detection"
 import { z } from "zod"
 
@@ -16,7 +16,7 @@ interface RouteParams {
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await auth()
+    const session = await getAuthSession()
     
     if (!session) {
       return NextResponse.json(

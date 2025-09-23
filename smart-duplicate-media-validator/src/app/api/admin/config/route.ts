@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getAuthSession } from "@/lib/auth-wrapper"
 import { DuplicateDetectionService } from "@/lib/duplicate-detection"
 import { z } from "zod"
 import { ValidationMethod } from "@prisma/client"
@@ -13,7 +13,7 @@ const configSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth()
+    const session = await getAuthSession()
     
     if (!session || session.user.role !== "ADMIN") {
       return NextResponse.json(
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth()
+    const session = await getAuthSession()
     
     if (!session || session.user.role !== "ADMIN") {
       return NextResponse.json(

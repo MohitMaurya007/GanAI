@@ -1,6 +1,7 @@
 "use client"
 
 import { useSession, signOut } from "next-auth/react"
+import { BYPASS_AUTH, mockTestUser } from "@/lib/test-auth"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,8 +17,16 @@ import { LogOut, Settings, User, Upload, Search, Shield } from "lucide-react"
 
 export function Navbar() {
   const { data: session, status } = useSession()
+  
+  // Use mock session if bypass is enabled in development
+  const effectiveSession = (BYPASS_AUTH && process.env.NODE_ENV === 'development') 
+    ? { user: mockTestUser } 
+    : session
+  const effectiveStatus = (BYPASS_AUTH && process.env.NODE_ENV === 'development') 
+    ? 'authenticated' 
+    : status
 
-  if (status === "loading") {
+  if (effectiveStatus === "loading") {
     return (
       <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center">
@@ -50,7 +59,7 @@ export function Navbar() {
           </Link>
         </div>
         
-        {session && (
+        {effectiveSession && (
           <div className="mr-4 hidden md:flex">
             <nav className="flex items-center space-x-6 text-sm font-medium">
               <Link
@@ -67,7 +76,7 @@ export function Navbar() {
                 <Search className="mr-2 h-4 w-4 inline" />
                 Duplicates
               </Link>
-              {(session.user.role === "ADMIN" || session.user.role === "REVIEWER") && (
+              {(effectiveSession.user.role === "ADMIN" || effectiveSession.user.role === "REVIEWER") && (
                 <Link
                   href="/admin"
                   className="transition-colors hover:text-foreground/80 text-foreground/60"
@@ -81,14 +90,14 @@ export function Navbar() {
         )}
 
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          {session ? (
+          {effectiveSession ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={session.user.image || ""} alt={session.user.name || ""} />
+                    <AvatarImage src={effectiveSession.user.image || ""} alt={effectiveSession.user.name || ""} />
                     <AvatarFallback>
-                      {session.user.name?.[0]?.toUpperCase() || session.user.email?.[0]?.toUpperCase()}
+                      {effectiveSession.user.name?.[0]?.toUpperCase() || effectiveSession.user.email?.[0]?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -97,14 +106,19 @@ export function Navbar() {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      {session.user.name || "User"}
+                      {effectiveSession.user.name || "User"}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      {session.user.email}
+                      {effectiveSession.user.email}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground capitalize">
-                      {session.user.role.toLowerCase().replace('_', ' ')}
+                      {effectiveSession.user.role.toLowerCase().replace('_', ' ')}
                     </p>
+                    {BYPASS_AUTH && process.env.NODE_ENV === 'development' && (
+                      <p className="text-xs leading-none text-orange-500 font-semibold">
+                        🚨 TEST MODE
+                      </p>
+                    )}
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
