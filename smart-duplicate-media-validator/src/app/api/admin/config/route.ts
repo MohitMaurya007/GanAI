@@ -3,6 +3,7 @@ import { getAuthSession } from "@/lib/auth-wrapper"
 import { DuplicateDetectionService } from "@/lib/duplicate-detection"
 import { z } from "zod"
 import { ValidationMethod } from "@prisma/client"
+import { UserRole } from "@/types/user"
 
 const configSchema = z.object({
   minSimilarityThreshold: z.number().min(0).max(100),
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getAuthSession()
     
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session || session.user.role !== UserRole.ADMIN) {
       return NextResponse.json(
         { error: "Unauthorized - Admin access required" },
         { status: 403 }
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getAuthSession()
     
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session || session.user.role !== UserRole.ADMIN) {
       return NextResponse.json(
         { error: "Unauthorized - Admin access required" },
         { status: 403 }

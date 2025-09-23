@@ -1,5 +1,5 @@
 // Test authentication bypass for development
-import { UserRole } from "@prisma/client"
+import { UserRole } from "@/types/user"
 
 // Set to true to bypass authentication for testing
 export const BYPASS_AUTH = true

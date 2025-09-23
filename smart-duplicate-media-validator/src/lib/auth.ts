@@ -5,7 +5,13 @@ import GoogleProvider from "next-auth/providers/google"
 import GitHubProvider from "next-auth/providers/github"
 import { db } from "./db"
 import bcrypt from "bcryptjs"
-import { UserRole } from "@prisma/client"
+import { UserRole as PrismaUserRole } from "@prisma/client"
+import { UserRole } from "@/types/user"
+
+// Helper function to convert Prisma UserRole to our UserRole
+function convertUserRole(prismaRole: PrismaUserRole): UserRole {
+  return prismaRole as unknown as UserRole
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
@@ -49,7 +55,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role,
+          role: convertUserRole(user.role),
           image: user.image,
         }
       }
@@ -102,7 +108,7 @@ export async function createUser(email: string, password: string, name?: string,
       email,
       name,
       password: hashedPassword,
-      role,
+      role: role as PrismaUserRole,
     }
   })
 }

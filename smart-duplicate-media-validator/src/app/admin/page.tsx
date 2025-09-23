@@ -4,11 +4,12 @@ import { DuplicateDetectionService } from "@/lib/duplicate-detection"
 import { db } from "@/lib/db"
 import { Navbar } from "@/components/layout/navbar"
 import { AdminDashboard } from "@/components/admin/admin-dashboard"
+import { UserRole } from "@/types/user"
 
 export default async function AdminPage() {
   const session = await getAuthSession()
 
-  if (!session || session.user.role !== "ADMIN") {
+  if (!session || session.user.role !== UserRole.ADMIN) {
     redirect("/auth/signin")
   }
 

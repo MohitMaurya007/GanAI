@@ -2,6 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react"
 import { BYPASS_AUTH, mockTestUser } from "@/lib/test-auth"
+import { UserRole } from "@/types/user"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {
@@ -76,7 +77,7 @@ export function Navbar() {
                 <Search className="mr-2 h-4 w-4 inline" />
                 Duplicates
               </Link>
-              {(effectiveSession.user.role === "ADMIN" || effectiveSession.user.role === "REVIEWER") && (
+              {(effectiveSession.user.role === UserRole.ADMIN || effectiveSession.user.role === UserRole.REVIEWER) && (
                 <Link
                   href="/admin"
                   className="transition-colors hover:text-foreground/80 text-foreground/60"
