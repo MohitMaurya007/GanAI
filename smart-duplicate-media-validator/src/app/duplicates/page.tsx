@@ -3,6 +3,7 @@ import { getAuthSession } from "@/lib/auth-wrapper"
 import { DuplicateDetectionService } from "@/lib/duplicate-detection"
 import { Navbar } from "@/components/layout/navbar"
 import { DuplicatesList } from "@/components/duplicates/duplicates-list"
+import { BYPASS_AUTH } from "@/lib/test-auth"
 
 export default async function DuplicatesPage() {
   const session = await getAuthSession()
@@ -11,8 +12,10 @@ export default async function DuplicatesPage() {
     redirect("/auth/signin")
   }
 
-  // Get duplicates for the current user
-  const duplicates = await DuplicateDetectionService.getDuplicatesForUser(session.user.id)
+  // Get duplicates for the current user (use mock data if bypass is enabled)
+  const duplicates = BYPASS_AUTH && process.env.NODE_ENV === 'development'
+    ? []
+    : await DuplicateDetectionService.getDuplicatesForUser(session.user.id)
 
   return (
     <div className="min-h-screen bg-background">

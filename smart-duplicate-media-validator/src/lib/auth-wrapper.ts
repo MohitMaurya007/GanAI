@@ -9,6 +9,12 @@ export async function getAuthSession() {
     return mockTestSession
   }
   
-  // Otherwise use real authentication
-  return await auth()
+  // Otherwise use real authentication with error handling
+  try {
+    return await auth()
+  } catch (error) {
+    console.error("Auth session error:", error)
+    // In case of auth errors, return null to allow proper error handling
+    return null
+  }
 }

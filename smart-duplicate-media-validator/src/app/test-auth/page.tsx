@@ -3,6 +3,7 @@ import { BYPASS_AUTH } from "@/lib/test-auth"
 import { Navbar } from "@/components/layout/navbar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { UserRole } from "@/types/user"
 
 export default async function TestAuthPage() {
   const session = await getAuthSession()
@@ -50,7 +51,7 @@ export default async function TestAuthPage() {
                     <p>✅ Dashboard access</p>
                     <p>✅ File upload</p>
                     <p>✅ Duplicate review</p>
-                    {(session.user.role === "ADMIN" || session.user.role === "REVIEWER") && (
+                    {(session.user.role === UserRole.ADMIN || session.user.role === UserRole.REVIEWER) && (
                       <p>✅ Admin panel access</p>
                     )}
                   </div>

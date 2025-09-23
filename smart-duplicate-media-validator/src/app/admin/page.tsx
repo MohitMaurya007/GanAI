@@ -5,6 +5,7 @@ import { db } from "@/lib/db"
 import { Navbar } from "@/components/layout/navbar"
 import { AdminDashboard } from "@/components/admin/admin-dashboard"
 import { UserRole } from "@/types/user"
+import { BYPASS_AUTH } from "@/lib/test-auth"
 
 export default async function AdminPage() {
   const session = await getAuthSession()
@@ -13,29 +14,47 @@ export default async function AdminPage() {
     redirect("/auth/signin")
   }
 
-  // Get system statistics
-  const stats = await DuplicateDetectionService.getSystemStats()
-  
-  // Get recent users
-  const recentUsers = await db.user.findMany({
-    take: 10,
-    orderBy: { createdAt: 'desc' },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      createdAt: true,
-      _count: {
-        select: {
-          mediaFiles: true
-        }
+  // Get system statistics (use mock data if bypass is enabled)
+  const stats = BYPASS_AUTH && process.env.NODE_ENV === 'development' 
+    ? {
+        totalFiles: 0,
+        totalDuplicates: 0,
+        pendingReview: 0,
+        autoApproved: 0,
+        userValidated: 0,
+        accuracyRate: 0
       }
-    }
-  })
+    : await DuplicateDetectionService.getSystemStats()
+  
+  // Get recent users (use mock data if bypass is enabled)
+  const recentUsers = BYPASS_AUTH && process.env.NODE_ENV === 'development'
+    ? []
+    : await db.user.findMany({
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          createdAt: true,
+          _count: {
+            select: {
+              mediaFiles: true
+            }
+          }
+        }
+      })
 
-  // Get detection config
-  const detectionConfig = await DuplicateDetectionService.getDetectionConfig()
+  // Get detection config (use mock data if bypass is enabled)
+  const detectionConfig = BYPASS_AUTH && process.env.NODE_ENV === 'development'
+    ? {
+        minSimilarityThreshold: 75,
+        minConfidenceThreshold: 80,
+        enabledMethods: ['FACIAL_RECOGNITION', 'SCENE_SIMILARITY', 'OBJECT_DETECTION', 'AUDIO_FINGERPRINT'],
+        autoApproveThreshold: 95
+      }
+    : await DuplicateDetectionService.getDetectionConfig()
 
   return (
     <div className="min-h-screen bg-background">
