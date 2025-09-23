@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
@@ -16,7 +15,7 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR || "./uploads"
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     
     if (!session) {
       return NextResponse.json(
@@ -85,7 +84,7 @@ export async function POST(request: NextRequest) {
     await writeFile(filepath, buffer)
 
     // Extract metadata based on file type
-    let metadata: any = {
+    let metadata: Record<string, unknown> = {
       originalName: file.name,
       size: file.size,
       mimeType: file.type,
@@ -119,7 +118,7 @@ export async function POST(request: NextRequest) {
         type: fileType.toUpperCase() as MediaType,
         path: filepath,
         hash,
-        metadata,
+        metadata: metadata as any,
         uploadedBy: session.user.id,
       }
     })

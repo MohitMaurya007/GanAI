@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { auth } from "@/lib/auth"
 import { DuplicateDetectionService } from "@/lib/duplicate-detection"
 import { z } from "zod"
 import { ValidationMethod } from "@prisma/client"
@@ -14,7 +13,7 @@ const configSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     
     if (!session || session.user.role !== "ADMIN") {
       return NextResponse.json(
@@ -36,7 +35,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid configuration", details: error.errors },
+        { error: "Invalid configuration", details: error.issues },
         { status: 400 }
       )
     }
@@ -51,7 +50,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     
     if (!session || session.user.role !== "ADMIN") {
       return NextResponse.json(

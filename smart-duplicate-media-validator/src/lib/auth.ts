@@ -1,4 +1,4 @@
-import { NextAuthOptions } from "next-auth"
+import NextAuth from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
@@ -7,8 +7,8 @@ import { db } from "./db"
 import bcrypt from "bcryptjs"
 import { UserRole } from "@prisma/client"
 
-export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(db) as any,
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  adapter: PrismaAdapter(db),
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -23,7 +23,7 @@ export const authOptions: NextAuthOptions = {
 
         const user = await db.user.findUnique({
           where: {
-            email: credentials.email
+            email: credentials.email as string
           }
         })
 
@@ -34,7 +34,7 @@ export const authOptions: NextAuthOptions = {
         // For demo purposes, we'll create a simple password check
         // In production, you'd want proper password hashing
         const isPasswordValid = await bcrypt.compare(
-          credentials.password,
+          credentials.password as string,
           user.name || "" // Using name field temporarily for password storage
         )
 
@@ -88,9 +88,8 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/auth/signin",
-    signUp: "/auth/signup",
   },
-}
+})
 
 export async function createUser(email: string, password: string, name?: string, role: UserRole = UserRole.STANDARD_USER) {
   const hashedPassword = await bcrypt.hash(password, 12)

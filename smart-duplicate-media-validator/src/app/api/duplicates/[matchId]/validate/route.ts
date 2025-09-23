@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { auth } from "@/lib/auth"
 import { DuplicateDetectionService } from "@/lib/duplicate-detection"
 import { z } from "zod"
 
@@ -10,14 +9,14 @@ const validateSchema = z.object({
 })
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     matchId: string
-  }
+  }>
 }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     
     if (!session) {
       return NextResponse.json(
@@ -26,7 +25,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    const { matchId } = params
+    const { matchId } = await params
     const body = await request.json()
     const { action, notes } = validateSchema.parse(body)
 
@@ -44,7 +43,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
+        { error: "Invalid input", details: error.issues },
         { status: 400 }
       )
     }

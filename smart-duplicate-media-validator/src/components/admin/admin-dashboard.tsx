@@ -36,7 +36,7 @@ interface AdminDashboardProps {
     email: string
     name: string | null
     role: string
-    createdAt: string
+    createdAt: Date | string
     _count: {
       mediaFiles: number
     }

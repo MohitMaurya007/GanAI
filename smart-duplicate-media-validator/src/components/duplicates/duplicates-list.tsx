@@ -43,7 +43,7 @@ interface DuplicateMatch {
   confidenceLevel: number
   method: string
   status: string
-  createdAt: string
+  createdAt: string | Date
   originalFile: {
     id: string
     filename: string
@@ -64,7 +64,7 @@ interface DuplicateMatch {
     id: string
     action: string
     notes: string | null
-    validatedAt: string
+    validatedAt: string | Date
     validator: {
       id: string
       name: string | null
@@ -374,7 +374,7 @@ function DuplicateCard({
                     <strong>{validation.validator.name || validation.validator.email}</strong> 
                     {" " + validation.action}d this match
                     {validation.notes && (
-                      <span className="block mt-1 text-sm">"{validation.notes}"</span>
+                      <span className="block mt-1 text-sm">&quot;{validation.notes}&quot;</span>
                     )}
                     <span className="block mt-1 text-xs text-muted-foreground">
                       {new Date(validation.validatedAt).toLocaleString()}
@@ -480,7 +480,7 @@ function DuplicateCard({
                 <div className="space-y-4">
                   <Alert>
                     <AlertDescription>
-                      The file "{duplicate.duplicateFile.originalName}" will be permanently deleted.
+                      The file &quot;{duplicate.duplicateFile.originalName}&quot; will be permanently deleted.
                     </AlertDescription>
                   </Alert>
                   <div>

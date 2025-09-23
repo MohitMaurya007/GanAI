@@ -1,12 +1,11 @@
 import { redirect } from "next/navigation"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { auth } from "@/lib/auth"
 import { DuplicateDetectionService } from "@/lib/duplicate-detection"
 import { Navbar } from "@/components/layout/navbar"
 import { DuplicatesList } from "@/components/duplicates/duplicates-list"
 
 export default async function DuplicatesPage() {
-  const session = await getServerSession(authOptions)
+  const session = await auth()
 
   if (!session) {
     redirect("/auth/signin")

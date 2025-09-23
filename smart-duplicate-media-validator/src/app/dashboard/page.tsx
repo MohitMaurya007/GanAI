@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { auth } from "@/lib/auth"
 import { Navbar } from "@/components/layout/navbar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,7 +7,7 @@ import { Upload, Search, FileImage, FileVideo, FileAudio, AlertTriangle } from "
 import Link from "next/link"
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions)
+  const session = await auth()
 
   if (!session) {
     redirect("/auth/signin")
