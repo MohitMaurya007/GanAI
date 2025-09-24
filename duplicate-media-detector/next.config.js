@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['sharp', 'jimp']
-  },
+  serverExternalPackages: ['sharp', 'jimp'],
   eslint: {
     // Disable ESLint during builds for now
     ignoreDuringBuilds: true,
