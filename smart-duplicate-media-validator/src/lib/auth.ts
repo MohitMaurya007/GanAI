@@ -7,6 +7,7 @@ import { db } from "./db"
 import bcrypt from "bcryptjs"
 import { UserRole as PrismaUserRole } from "@prisma/client"
 import { UserRole } from "@/types/user"
+import { BYPASS_AUTH } from "./test-auth"
 
 // Helper function to convert Prisma UserRole to our UserRole
 function convertUserRole(prismaRole: PrismaUserRole): UserRole {
@@ -14,7 +15,10 @@ function convertUserRole(prismaRole: PrismaUserRole): UserRole {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(db),
+  // Only use adapter when not in bypass mode
+  ...(!(process.env.NODE_ENV === 'development' && BYPASS_AUTH) && {
+    adapter: PrismaAdapter(db)
+  }),
   providers: [
     CredentialsProvider({
       name: "credentials",

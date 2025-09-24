@@ -1,8 +1,9 @@
 "use client"
 
-import { useSession, signOut } from "next-auth/react"
-import { BYPASS_AUTH, mockTestUser } from "@/lib/test-auth"
+import { signOut } from "next-auth/react"
+import { BYPASS_AUTH } from "@/lib/test-auth"
 import { UserRole } from "@/types/user"
+import { useAuthSession } from "@/hooks/useAuthSession"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {
@@ -17,17 +18,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { LogOut, Settings, User, Upload, Search, Shield } from "lucide-react"
 
 export function Navbar() {
-  const { data: session, status } = useSession()
-  
-  // Use mock session if bypass is enabled in development
-  const effectiveSession = (BYPASS_AUTH && process.env.NODE_ENV === 'development') 
-    ? { user: mockTestUser } 
-    : session
-  const effectiveStatus = (BYPASS_AUTH && process.env.NODE_ENV === 'development') 
-    ? 'authenticated' 
-    : status
+  const { data: session, status } = useAuthSession()
 
-  if (effectiveStatus === "loading") {
+  if (status === "loading") {
     return (
       <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center">
@@ -60,7 +53,7 @@ export function Navbar() {
           </Link>
         </div>
         
-        {effectiveSession && (
+        {session && (
           <div className="mr-4 hidden md:flex">
             <nav className="flex items-center space-x-6 text-sm font-medium">
               <Link
@@ -77,7 +70,7 @@ export function Navbar() {
                 <Search className="mr-2 h-4 w-4 inline" />
                 Duplicates
               </Link>
-              {(effectiveSession.user.role === UserRole.ADMIN || effectiveSession.user.role === UserRole.REVIEWER) && (
+              {(session.user.role === UserRole.ADMIN || session.user.role === UserRole.REVIEWER) && (
                 <Link
                   href="/admin"
                   className="transition-colors hover:text-foreground/80 text-foreground/60"
@@ -91,14 +84,14 @@ export function Navbar() {
         )}
 
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          {effectiveSession ? (
+          {session ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={effectiveSession.user.image || ""} alt={effectiveSession.user.name || ""} />
+                    <AvatarImage src={session.user.image || ""} alt={session.user.name || ""} />
                     <AvatarFallback>
-                      {effectiveSession.user.name?.[0]?.toUpperCase() || effectiveSession.user.email?.[0]?.toUpperCase()}
+                      {session.user.name?.[0]?.toUpperCase() || session.user.email?.[0]?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -107,13 +100,13 @@ export function Navbar() {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      {effectiveSession.user.name || "User"}
+                      {session.user.name || "User"}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      {effectiveSession.user.email}
+                      {session.user.email}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground capitalize">
-                      {effectiveSession.user.role.toLowerCase().replace('_', ' ')}
+                      {session.user.role.toLowerCase().replace('_', ' ')}
                     </p>
                     {BYPASS_AUTH && process.env.NODE_ENV === 'development' && (
                       <p className="text-xs leading-none text-orange-500 font-semibold">
