@@ -1,0 +1,180 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  STANDARD_USER
+  REVIEWER
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+}
+
+enum DuplicateStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  AUTO_APPROVED
+}
+
+enum ValidationMethod {
+  FACIAL_RECOGNITION
+  SCENE_SIMILARITY
+  OBJECT_DETECTION
+  AUDIO_FINGERPRINT
+  SPEECH_RECOGNITION
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String?   // For credentials-based authentication
+  role          UserRole  @default(STANDARD_USER)
+  image         String?
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  mediaFiles    MediaFile[]
+  validations   DuplicateValidation[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+model MediaFile {
+  id          String    @id @default(cuid())
+  filename    String
+  originalName String
+  mimeType    String
+  size        Int
+  type        MediaType
+  path        String
+  url         String?
+  hash        String    @unique
+  metadata    Json?     // Store extracted metadata (dimensions, duration, etc.)
+  uploadedBy  String
+  uploadedAt  DateTime  @default(now())
+  
+  user        User      @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  
+  // Duplicate relationships
+  duplicatesFound    DuplicateMatch[] @relation("OriginalFile")
+  duplicateMatches   DuplicateMatch[] @relation("DuplicateFile")
+  
+  // AI Analysis results
+  analysisResults    AIAnalysisResult[]
+
+  @@map("media_files")
+}
+
+model DuplicateMatch {
+  id              String          @id @default(cuid())
+  originalFileId  String
+  duplicateFileId String
+  similarityScore Float           // 0-100 percentage
+  confidenceLevel Float           // 0-100 percentage
+  method          ValidationMethod
+  status          DuplicateStatus @default(PENDING)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  originalFile    MediaFile       @relation("OriginalFile", fields: [originalFileId], references: [id], onDelete: Cascade)
+  duplicateFile   MediaFile       @relation("DuplicateFile", fields: [duplicateFileId], references: [id], onDelete: Cascade)
+  
+  validations     DuplicateValidation[]
+
+  @@unique([originalFileId, duplicateFileId, method])
+  @@map("duplicate_matches")
+}
+
+model DuplicateValidation {
+  id              String          @id @default(cuid())
+  matchId         String
+  validatedBy     String
+  action          String          // "approve", "reject", "archive", "delete"
+  notes           String?
+  validatedAt     DateTime        @default(now())
+  
+  match           DuplicateMatch  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  validator       User            @relation(fields: [validatedBy], references: [id], onDelete: Cascade)
+
+  @@map("duplicate_validations")
+}
+
+model AIAnalysisResult {
+  id          String          @id @default(cuid())
+  fileId      String
+  method      ValidationMethod
+  results     Json            // Store AI analysis results (faces, objects, audio features, etc.)
+  confidence  Float
+  processedAt DateTime        @default(now())
+  
+  file        MediaFile       @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@map("ai_analysis_results")
+}
+
+model SystemConfig {
+  id                    String  @id @default(cuid())
+  key                   String  @unique
+  value                 Json
+  description           String?
+  updatedAt             DateTime @updatedAt
+  updatedBy             String?
+
+  @@map("system_config")
+}
